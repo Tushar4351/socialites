@@ -39,7 +39,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           name: currentAccount.name,
           username: currentAccount.username,
           email: currentAccount.email,
-          imageUrl: currentAccount.imageUrl,
+          imageUrl: currentAccount.imageURl,
           bio: currentAccount.bio,
         });
         setlsAuthenticated(true);
