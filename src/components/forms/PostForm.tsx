@@ -9,26 +9,29 @@ import { useUserContext } from "@/context/AuthContext";
 //import { FileUploader, Loader } from "@/components/shared";
 import { PostValidationSchema } from "@/lib/Validation";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-  } from "@/components/ui/form";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import FileUploader from "@/components/shared/FileUploader";
-import { useCreatePost } from "@/lib/react-query/queriesAndMutation";
+import {
+  useCreatePost,
+  useUpdatePost,
+} from "@/lib/react-query/queriesAndMutation";
 import Loader from "@/components/shared/Loader";
 
 type PostFormProps = {
   post?: Models.Document;
-  // action: "Create" | "Update";
+  action: "Create" | "Update";
 };
 
-const PostForm = ({ post }: PostFormProps) => {
+const PostForm = ({ post, action }: PostFormProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useUserContext();
@@ -46,11 +49,29 @@ const PostForm = ({ post }: PostFormProps) => {
   // Query
   const { mutateAsync: createPost, isPending: isLoadingCreate } =
     useCreatePost();
-  //   const { mutateAsync: updatePost, isPending: isLoadingUpdate } =
-  //     useUpdatePost();
+  const { mutateAsync: updatePost, isPending: isLoadingUpdate } =
+    useUpdatePost();
 
   // Handler
   const onSubmit = async (value: z.infer<typeof PostValidationSchema>) => {
+    //ACTION = UPDATE
+    if (post && action === "Update") {
+      const updatedPost = await updatePost({
+        ...value,
+        postId: post.$id,
+        imageID: post.imageID,
+        imageURL: post.imageURL,
+      });
+
+      if (!updatedPost) {
+        toast({
+          title: `${action} post failed. Please try again.`,
+        });
+      }
+      return navigate(`/posts/${post.$id}`);
+    }
+
+    // ACTION = CREATE
     const newPost = await createPost({
       ...value,
       userId: user.id,
@@ -58,40 +79,10 @@ const PostForm = ({ post }: PostFormProps) => {
 
     if (!newPost) {
       toast({
-        title: "Please try again .",
+        title: `${action} post failed. Please try again.`,
       });
     }
     navigate("/");
-
-    // ACTION = UPDATE
-    // if (post && action === "Update") {
-    //   const updatedPost = await updatePost({
-    //     ...value,
-    //     postId: post.$id,
-    //     imageId: post.imageId,
-    //     imageUrl: post.imageUrl,
-    //   });
-
-    //   if (!updatedPost) {
-    //     toast({
-    //       title: `${action} post failed. Please try again.`,
-    //     });
-    //   }
-    //   return navigate(`/posts/${post.$id}`);
-    // }
-
-    // // ACTION = CREATE
-    // const newPost = await createPost({
-    //   ...value,
-    //   userId: user.id,
-    // });
-
-    // if (!newPost) {
-    //   toast({
-    //     title: `${action} post failed. Please try again.`,
-    //   });
-    // }
-    // navigate("/");
   };
 
   return (
@@ -126,7 +117,7 @@ const PostForm = ({ post }: PostFormProps) => {
               <FormControl>
                 <FileUploader
                   fieldChange={field.onChange}
-                  mediaUrl={post?.imageUrl}
+                  mediaUrl={post?.imageURL}
                 />
               </FormControl>
               <FormMessage className="shad-form_message" />
@@ -180,10 +171,10 @@ const PostForm = ({ post }: PostFormProps) => {
           <Button
             type="submit"
             className="shad-button_primary whitespace-nowrap"
-            disabled={isLoadingCreate}
+            disabled={isLoadingCreate || isLoadingUpdate}
           >
-            {isLoadingCreate && <Loader />}
-            Post
+            {(isLoadingCreate || isLoadingUpdate) && <Loader />}
+            {action} Post
           </Button>
         </div>
       </form>

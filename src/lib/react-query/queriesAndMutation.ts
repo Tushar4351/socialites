@@ -1,11 +1,19 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  useInfiniteQuery,
-} from "@tanstack/react-query";
-import { createPost, createUserAccount, deleteSavedPost, getCurrentUser, getRecentPosts, likePost, savePost, signInAccount, signOutAccount } from "@/lib/appwrite/api";
-import { INewUser,INewPost } from "@/types";
+  createPost,
+  createUserAccount,
+  deletePost,
+  deleteSavedPost,
+  getCurrentUser,
+  getPostById,
+  getRecentPosts,
+  likePost,
+  savePost,
+  signInAccount,
+  signOutAccount,
+  updatePost,
+} from "@/lib/appwrite/api";
+import { INewUser, INewPost, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from "./queryKeys";
 
 export const useCreateUserAccount = () => {
@@ -17,7 +25,7 @@ export const useCreateUserAccount = () => {
 export const useSignInAccount = () => {
   return useMutation({
     mutationFn: (user: { email: string; password: string }) =>
-    signInAccount(user),
+      signInAccount(user),
   });
 };
 
@@ -115,5 +123,38 @@ export const useGetCurrentUser = () => {
   return useQuery({
     queryKey: [QUERY_KEYS.GET_CURRENT_USER],
     queryFn: getCurrentUser,
+  });
+};
+
+export const useGetPostById = (postId?: string) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GET_POST_BY_ID, postId],
+    queryFn: () => getPostById(postId),
+    enabled: !!postId,
+  });
+};
+
+export const useUpdatePost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (post: IUpdatePost) => updatePost(post),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_POST_BY_ID, data?.$id],
+      });
+    },
+  });
+};
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, imageID }: { postId?: string; imageID: string }) =>
+      deletePost(postId, imageID),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
+      });
+    },
   });
 };
