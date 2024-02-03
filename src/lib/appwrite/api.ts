@@ -7,34 +7,41 @@ import { INewPost, INewUser, IUpdatePost } from "@/types";
 // AUTH
 // ============================================================
 
-// ============================== SIGN UP
+// Async function to create a user account
 export async function createUserAccount(user: INewUser) {
   try {
+    // Create a new account using the 'account' instance (presumably from the Appwrite library)
     const newAccount = await account.create(
-      ID.unique(),
-      user.email,
-      user.password,
-      user.name
+      ID.unique(),        // Generate a unique identifier for the account
+      user.email,         // User's email
+      user.password,      // User's password
+      user.name           // User's name
     );
 
+    // Check if the account creation was successful
     if (!newAccount) throw Error;
 
+    // Generate an avatar URL based on the user's name using the 'avatars' instance
     const avatarUrl = avatars.getInitials(user.name);
 
+    // Save user details to the database using a custom function (saveUserToDB)
     const newUser = await saveUserToDB({
-      accountID: newAccount.$id,
-      name: newAccount.name,
-      email: newAccount.email,
-      username: user.username,
-      imageURl: avatarUrl,
+      accountID: newAccount.$id,  // ID of the newly created account
+      name: newAccount.name,      // User's name
+      email: newAccount.email,    // User's email
+      username: user.username,    // User's username
+      imageURl: avatarUrl,        // Generated avatar URL
     });
 
+    // Return the newly created user
     return newUser;
   } catch (error) {
+    // Log and return any errors that occur during the process
     console.log(error);
     return error;
   }
 }
+ 
 
 // ============================== SAVE USER TO DB
 export async function saveUserToDB(user: {
@@ -59,21 +66,25 @@ export async function saveUserToDB(user: {
 }
 
 // ============================== SIGN IN
+// Asynchronous function for signing in a user account
 export async function signInAccount(user: { email: string; password: string }) {
   try {
+    // Attempt to create a new session by signing in with the provided email and password
     const session = await account.createEmailSession(user.email, user.password);
 
+    // If successful, return the session information
     return session;
   } catch (error) {
+    // If an error occurs during the sign-in process, log the error
     console.log(error);
   }
 }
+
 
 // ============================== GET ACCOUNT
 export async function getAccount() {
   try {
     const currentAccount = await account.get();
-
     return currentAccount;
   } catch (error) {
     console.log(error);
@@ -81,26 +92,41 @@ export async function getAccount() {
 }
 
 // ============================== GET USER
+// Async function to retrieve the current user's data
 export async function getCurrentUser() {
   try {
+    // Get the current account information using the getAccount function
     const currentAccount = await getAccount();
 
-    if (!currentAccount) throw Error;
+    // Check if the current account information is unavailable
+    if (!currentAccount) {
+      throw Error;
+    }
 
+    // Retrieve the current user's data from the database
     const currentUser = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.userCollectionId,
-      [Query.equal("accountID", currentAccount.$id)]
+      appwriteConfig.databaseId,               // Database ID
+      appwriteConfig.userCollectionId,         // Collection ID for user data
+      [Query.equal("accountID", currentAccount.$id)]  // Query to match the account ID
     );
 
-    if (!currentUser) throw Error;
+    // Check if the current user's data is unavailable
+    if (!currentUser) {
+      throw Error;
+    }
 
+    // Return the first document (user data) from the retrieved data
     return currentUser.documents[0];
+
   } catch (error) {
+    // Log any errors that occur during the data retrieval process
     console.log(error);
+    
+    // Return null if there's an error or if the data is not found
     return null;
   }
 }
+
 // ============================== SIGN OUT
 export async function signOutAccount() {
   try {

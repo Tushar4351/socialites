@@ -30,51 +30,78 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const navigate = useNavigate();
 
-  const checkAuthUser = async () => {
-    try {
-      const currentAccount = await getCurrentUser();
-      if (currentAccount) {
-        setUser({
-          id: currentAccount.$id,
-          name: currentAccount.name,
-          username: currentAccount.username,
-          email: currentAccount.email,
-          imageUrl: currentAccount.imageURl,
-          bio: currentAccount.bio,
-        });
-        setlsAuthenticated(true);
-        return true;
-      }
+// Function to check if the user is authenticated
+const checkAuthUser = async () => {
+  try {
+    // Attempt to get the current user's account information
+    const currentAccount = await getCurrentUser();
 
-      return false;
-    } catch (error) {
-      console.log(error);
-      return false;
-    } finally {
-      setLoading(false);
+    // Check if the current user's account information is available
+    if (currentAccount) {
+      // If available, update the user state with relevant information
+      setUser({
+        id: currentAccount.$id,
+        name: currentAccount.name,
+        username: currentAccount.username,
+        email: currentAccount.email,
+        imageUrl: currentAccount.imageURl,
+        bio: currentAccount.bio,
+      });
+
+      // Set the authentication state to true
+      setlsAuthenticated(true);
+
+      // Return true to indicate successful authentication
+      return true;
     }
-  };
-  useEffect(() => {
-    if (
-      localStorage.getItem("cookieFallback") === "[]" ||
-      localStorage.getItem("cookieFallback") === null
-    )
-      navigate("/sign-in");
-    checkAuthUser();
-  }, []);
 
-  const value = {
-    user,
-    setUser,
-    isLoading,
-    isAuthenticated,
-    setlsAuthenticated,
-    checkAuthUser,
-  };
+    // If the current user's account information is not available, return false
+    return false;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  } catch (error) {
+    // Log any errors that occur during the authentication process
+    console.log(error);
+
+    // Return false in case of an error
+    return false;
+
+  } finally {
+    // Set loading state to false after the authentication attempt
+    setLoading(false);
+  }
+};
+
+// useEffect hook to run when the component mounts
+useEffect(() => {
+  // Check if the user has accepted cookies or if the cookieFallback is not set
+  if (
+    localStorage.getItem("cookieFallback") === "[]" ||
+    localStorage.getItem("cookieFallback") === null
+  )
+    // Redirect to the sign-in page if cookies are not accepted
+    navigate("/sign-in");
+
+  // Check the user's authentication status
+  checkAuthUser();
+
+}, []); // The empty dependency array ensures that this effect runs only once, similar to componentDidMount
+
+// Context value containing user information, loading state, authentication state, and the checkAuthUser function
+const value = {
+  user,
+  setUser,
+  isLoading,
+  isAuthenticated,
+  setlsAuthenticated,
+  checkAuthUser,
+};
+
+// Return the AuthContext.Provider with the provided context value
+return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;
 
+// Export a custom hook to access the user context
 export const useUserContext = () => useContext(AuthContext);
+

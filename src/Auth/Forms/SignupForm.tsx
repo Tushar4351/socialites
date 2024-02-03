@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,54 +24,86 @@ import { useUserContext } from "@/context/AuthContext";
 
 const SignupForm = () => {
   const { toast } = useToast();
-  const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
+  const { checkAuthUser} = useUserContext();
   const navigate = useNavigate();
 
   // 1. Define your form.
-  const form = useForm<z.infer<typeof SignupValidationSchema>>({
-    resolver: zodResolver(SignupValidationSchema),
-    defaultValues: {
-      name: "",
-      username: "",
-      email: "",
-      password: "",
-    },
-  });
+// Create a form using the useForm hook and specifying the inferred type from SignupValidationSchema
+const form = useForm<z.infer<typeof SignupValidationSchema>>({
+  // Set the resolver to integrate zod validation with the form library
+  resolver: zodResolver(SignupValidationSchema),
 
-  const { mutateAsync: createUserAccount, isPending: isCreatingAccount } =
-    useCreateUserAccount();
+  // Set default values for the form fields
+  defaultValues: {
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+  },
+});
+  
+  
+ // Destructuring properties from the object returned by useCreateUserAccount hook
+const {
+  // Rename mutateAsync to createUserAccount for clarity
+  mutateAsync: createUserAccount,
 
-  const { mutateAsync: signInAccount, isPending: isSignInAccount } =
+  // Rename isPending to isCreatingAccount for clarity
+  isPending: isCreatingAccount,
+} = useCreateUserAccount();
+
+// Now, createUserAccount is an asynchronous function for creating a user account,
+// and isCreatingAccount is a boolean indicating whether the creation process is pending.
+
+
+  const { mutateAsync: signInAccount } =
     useSignInAccount();
 
   // 2. Define a submit handler.
-  async function onSubmit(values: z.infer<typeof SignupValidationSchema>) {
-    try {
-      const newUser = await createUserAccount(values);
-      if (!newUser) {
-        return toast({
-          title: "Something went wrong. Please login your new account",
-        });
-      }
+// Async function called when the form is submitted
+async function onSubmit(values: z.infer<typeof SignupValidationSchema>) {
+  try {
+    // Create a new user account using the createUserAccount function
+    const newUser = await createUserAccount(values);
 
-      const session = await signInAccount({
-        email: values.email,
-        password: values.password,
+    // Check if the user account creation was unsuccessful
+    if (!newUser) {
+      // Display a toast message indicating that something went wrong
+      return toast({
+        title: "Something went wrong. Please login your new account",
       });
-
-      if (!session) {
-        return toast({ title: "Sign in Faild, Please try again" });
-      }
-
-      const isLoggedIn = await checkAuthUser();
-      if (isLoggedIn) {
-        form.reset();
-        navigate("/");
-      } else toast({ title: "Sign up failed. Please try again." });
-    } catch (error) {
-      console.log(error);
     }
+
+    // Attempt to sign in the user using the signInAccount function
+    const session = await signInAccount({
+      email: values.email,
+      password: values.password,
+    });
+
+    // Check if the sign-in process was unsuccessful
+    if (!session) {
+      // Display a toast message indicating that sign-in failed
+      return toast({ title: "Sign in failed. Please try again" });
+    }
+
+    // Check if the user is successfully authenticated after sign-in
+    const isLoggedIn = await checkAuthUser();
+
+    // If the user is authenticated, reset the form, navigate to the home page, and display a success message
+    if (isLoggedIn) {
+      form.reset();  // Reset the form state
+      navigate("/"); // Navigate to the home page
+    } else {
+      // If authentication fails, display a toast message indicating a sign-up failure
+      toast({ title: "Sign up failed. Please try again." });
+    }
+
+  } catch (error) {
+    // Log and handle any errors that occur during the form submission process
+    console.error("Error during form submission:", error);
   }
+}
+
 
   return (
     <Form {...form}>

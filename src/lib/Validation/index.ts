@@ -1,26 +1,23 @@
 import * as z from "zod";
 
+// Validation schema for user signup using ZOD Validation
+
 export const SignupValidationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  username: z
-    .string()
-    .min(2, { message: "Name must be at least 2 characters." }),
+  username: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
+
+// Validation schema for user signin
 
 export const SigninValidationSchema = z.object({
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
 
-// ============================================================
-// POST
-// ============================================================
+// Validation schema for post creation
+
 export const PostValidationSchema = z.object({
   caption: z.string().min(5, { message: "Minimum 5 characters." }).max(2200, { message: "Maximum 2,200 caracters" }),
   file: z.custom<File[]>(),

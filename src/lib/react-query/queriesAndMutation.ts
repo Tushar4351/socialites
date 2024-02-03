@@ -18,11 +18,16 @@ import {
 import { INewUser, INewPost, IUpdatePost } from "@/types";
 import { QUERY_KEYS } from "./queryKeys";
 
+// Custom hook for creating a user account using the useMutation hook
 export const useCreateUserAccount = () => {
+  // Return the result of the useMutation hook
   return useMutation({
+    // Configure the mutation function
     mutationFn: (user: INewUser) => createUserAccount(user),
   });
 };
+
+// Custom hook for signing in a user account using the useMutation hook
 
 export const useSignInAccount = () => {
   return useMutation({
